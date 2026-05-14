@@ -63,3 +63,14 @@ def test_sync_push_returns_correct_path(vault_dir):
         path = sync_push("proj", str(vault_dir))
         assert isinstance(path, Path)
         assert path.suffix == ".json"
+
+
+def test_sync_pull_overwrites_existing_vault(tmp_path):
+    """Pulling should overwrite an existing local vault file with the remote content."""
+    vault_file = tmp_path / ".envault.json"
+    old_vault = json.dumps({"version": 1, "payload": "olddata=="})
+    vault_file.write_text(old_vault, encoding="utf-8")
+
+    with patch("envault.sync.pull_vault", return_value=VALID_VAULT):
+        path = sync_pull("my-project", str(tmp_path))
+        assert json.loads(path.read_text()) == json.loads(VALID_VAULT)
