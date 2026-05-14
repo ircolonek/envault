@@ -57,9 +57,13 @@ def _request(method: str, path: str, body: Optional[dict] = None) -> dict:
     except urllib.error.HTTPError as exc:
         if exc.code == 401:
             raise RemoteAuthError("Invalid or expired API token.") from exc
+        if exc.code == 404:
+            raise RemoteError(f"Resource not found: {path}") from exc
         raise RemoteError(f"HTTP {exc.code}: {exc.reason}") from exc
     except urllib.error.URLError as exc:
         raise RemoteError(f"Connection error: {exc.reason}") from exc
+    except json.JSONDecodeError as exc:
+        raise RemoteError("Failed to parse JSON response from remote.") from exc
 
 
 def push_vault(project: str, encrypted_payload: str) -> None:
