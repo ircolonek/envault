@@ -19,6 +19,9 @@ def cmd_audit_log(args: argparse.Namespace) -> None:
 
     if args.action:
         entries = [e for e in entries if e.get("action") == args.action]
+        if not entries:
+            print(f"No audit entries found for action: {args.action}")
+            return
 
     if args.json:
         print(json.dumps(entries, indent=2))
@@ -34,7 +37,12 @@ def cmd_audit_log(args: argparse.Namespace) -> None:
 
 
 def cmd_audit_clear(args: argparse.Namespace) -> None:
-    """Clear the audit log."""
+    """Clear the audit log after optional confirmation prompt."""
+    if not getattr(args, "yes", False):
+        confirm = input("Are you sure you want to clear the audit log? [y/N] ").strip().lower()
+        if confirm != "y":
+            print("Aborted.")
+            return
     clear_log(directory=args.dir)
     print("Audit log cleared.")
 
@@ -54,4 +62,7 @@ def register_audit_commands(subparsers: argparse._SubParsersAction) -> None:  # 
     # envault audit clear
     clear_parser = audit_sub.add_parser("clear", help="Clear the audit log")
     clear_parser.add_argument("--dir", default=None, help="Vault directory")
+    clear_parser.add_argument(
+        "--yes", "-y", action="store_true", help="Skip confirmation prompt"
+    )
     clear_parser.set_defaults(func=cmd_audit_clear)
